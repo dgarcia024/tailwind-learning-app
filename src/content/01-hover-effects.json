@@ -1,0 +1,32 @@
+{
+  "id": "tailwind-01-hover-card",
+  "title": "Tarjetas Interactivas con Hover y Escala",
+  "difficulty": "Easy",
+  "description": "Aprende a usar transiciones, cambios de color y transformaciones de escala al pasar el cursor sobre un componente.",
+  "steps": [
+    {
+      "stepNumber": 1,
+      "title": "Estructura Base",
+      "instruction": "Comencemos creando una tarjeta simple. Añade una clase para darle un fondo blanco (`bg-white`), esquinas redondeadas grandes (`rounded-2xl`), una sombra sutil (`shadow-md`) y un padding interno (`p-6`).",
+      "codeTemplate": "<div class=\"\">\n  <h3 class=\"text-xl font-bold text-gray-800\">Explora el Universo</h3>\n  <p class=\"text-gray-500 mt-2\">Aprende a dominar Tailwind CSS paso a paso con ejemplos interactivos reales.</p>\n</div>",
+      "expectedClasses": ["bg-white", "rounded-2xl", "shadow-md", "p-6"],
+      "hint": "Recuerda separar las clases por espacios dentro del atributo class."
+    },
+    {
+      "stepNumber": 2,
+      "title": "Preparando la Transición",
+      "instruction": "Para que la animación no sea abrupta, necesitamos preparar el elemento. Añade la clase `transition-all` para habilitar las transiciones, y `duration-300` para que el efecto tome 300 milisegundos.",
+      "codeTemplate": "<div class=\"bg-white rounded-2xl shadow-md p-6\">\n  <h3 class=\"text-xl font-bold text-gray-800\">Explora el Universo</h3>\n  <p class=\"text-gray-500 mt-2\">Aprende a dominar Tailwind CSS paso a paso con ejemplos interactivos reales.</p>\n</div>",
+      "expectedClasses": ["transition-all", "duration-300"],
+      "hint": "Las clases duration en Tailwind mapean directamente a la propiedad CSS transition-duration."
+    },
+    {
+      "stepNumber": 3,
+      "title": "Efecto Hover y Escala",
+      "instruction": "¡Es hora de la magia! Añade `hover:scale-105` para aumentar el tamaño de la tarjeta un 5% y `hover:shadow-2xl` para intensificar la sombra cuando el usuario pase el cursor.",
+      "codeTemplate": "<div class=\"bg-white rounded-2xl shadow-md p-6 transition-all duration-300\">\n  <h3 class=\"text-xl font-bold text-gray-800\">Explora el Universo</h3>\n  <p class=\"text-gray-500 mt-2\">Aprende a dominar Tailwind CSS paso a paso con ejemplos interactivos reales.</p>\n</div>",
+      "expectedClasses": ["hover:scale-105", "hover:shadow-2xl"],
+      "hint": "El prefijo hover: aplica la clase de utilidad solo cuando se dispara el evento correspondinte en CSS."
+    }
+  ]
+}
