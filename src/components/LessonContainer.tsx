@@ -109,16 +109,16 @@ export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
                             className={`flex-1 px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-sm
                                 ${isStepCompleted
                                     ? 'bg-emerald-500 hover:bg-emerald-600 text-white cursor-pointer'
-                                    : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                                    : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
                         >
                             {currentStepIndex === lessonData.steps.length - 1 ? 'Finalizar lección' : 'Siguiente paso'}
                         </button>
                     </div>
                 </div>
                 {/* PANEL CENTRAL Y DERECHO: Editor y vista previa */}
-                <div className='w-[70%] h-full flex flex-col'>
+                <div className='w-[75%] h-full flex flex-col'>
                     {/* Seccion editor del codigo */}
-                    <div className='w-[50%] border-b bg-slate-700 flex flex-col'>
+                    <div className='h-[50%] border-b bg-slate-700 flex flex-col'>
                         <div className='bg-slate-950 px-4 py-2 border-b border-slate-800 flex justify-between items-center'>
                             <span className='text-xs font-mono uppercase tracking-wider text-slate-400'>
                                 Editor HTML / Tailwind
@@ -140,6 +140,10 @@ export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
                                 className='h-full overflow-hidden'
                             />
                         </div>
+                    </div>
+                    {/* Seccion vista previa */}
+                    <div className='h-[50%] flex flex-col bg-slate-950'>
+                        
                     </div>
                 </div>
             </div>
