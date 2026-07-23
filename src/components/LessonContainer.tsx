@@ -9,8 +9,26 @@ interface LessonContainerProps {
 }
 
 export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
+    const STORAGE_KEY = `lesson_progress_${lessonData.id}`;
+
+
     // Estado para el paso actual
     const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
+
+    // Guardamos el historial del codigo por paso { [stepNumber] : string }
+    const [userCodeHistory, setUserCodeHistory] = useState<Record<number, string>>(() => {
+        if (typeof window !== 'undefined') {
+            const saved = localStorage.getItem(STORAGE_KEY);
+            if (saved) {
+                try {
+                    return JSON.parse(saved)
+                } catch (error) {
+                    console.log(error);
+                }
+            }
+        }
+        return {}
+    })
 
     // Estado para capturar el codigo que el usuario escribe en el editor
     const [userCode, setUserCode] = useState<string>('');
@@ -131,7 +149,7 @@ export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
                             </span>
                         </div>
                         <div className='flex-1 overflow-auto text-base'>
-                            <CodeMirror 
+                            <CodeMirror
                                 value={userCode}
                                 height='100%'
                                 theme='dark'
@@ -143,7 +161,7 @@ export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
                     </div>
                     {/* Seccion vista previa */}
                     <div className='h-[50%] flex flex-col bg-slate-950'>
-                        
+                        <PreviewFrame code={userCode} />
                     </div>
                 </div>
             </div>
