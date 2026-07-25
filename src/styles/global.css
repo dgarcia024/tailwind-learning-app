@@ -1,7 +1,12 @@
 @import "tailwindcss";
 
-@layer base {
-    button {
-        cursor: pointer;
-    }
+button {
+    cursor: pointer;
+}
+
+/* Resalte de la línea guía para la lección */
+.cm-highlighted-step-line {
+    background-color: rgba(245, 158, 11, 0.15) !important;
+    /* Ámbar/Amarillo suave */
+    border-left: 3px solid #f59e0b !important;
 }

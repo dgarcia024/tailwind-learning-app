@@ -1,12 +1,30 @@
 import React, { useEffect, useState } from 'react'
 import CodeMirror from '@uiw/react-codemirror';
 import { html } from '@codemirror/lang-html';
+import { EditorView, Decoration } from '@codemirror/view';
 import { PreviewFrame } from './PreviewFrame';
 import type { Lesson, LessonStep } from '../types';
 
 interface LessonContainerProps {
     lessonData: Lesson;
 }
+
+
+// Helper para crear la extensión de resaltado
+const highlightTargetLine = (targetLineNumber?: number) => {
+    if (!targetLineNumber || targetLineNumber < 1) return [];
+
+    return EditorView.decorations.compute(['doc'], (state) => {
+        if (targetLineNumber <= state.doc.lines) {
+            const line = state.doc.line(targetLineNumber);
+            const lineHighlightDecoration = Decoration.line({
+                attributes: { class: 'cm-highlighted-step-line' }
+            });
+            return Decoration.set([lineHighlightDecoration.range(line.from)]);
+        }
+        return Decoration.none;
+    });
+};
 
 export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
     const STORAGE_KEY = `lesson_progress_${lessonData.id}`;
@@ -27,41 +45,49 @@ export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
                 }
             }
         }
-        return {}
+        return {};
     })
 
     // Estado para capturar el codigo que el usuario escribe en el editor
     const [userCode, setUserCode] = useState<string>('');
 
     // Estado para saber si el estado actual ha sido completado con éxito
-    const [isStepCompleted, setisStepCompleted] = useState<boolean>(false);
+    const [isStepCompleted, setIsStepCompleted] = useState<boolean>(false);
 
     // Mostro u ocultar la pista
     const [showHint, setShowHint] = useState<boolean>(false);
 
     const currentStep: LessonStep = lessonData.steps[currentStepIndex];
 
-    // Cada vez que cambie el paso, reiniciamos el codigo con la plantilla y los visuales
+    // 1. Cargar código guardado o plantilla por defecto cuando cambia el paso
     useEffect(() => {
         if (currentStep) {
-            setUserCode(currentStep.codeTemplate);
-            setisStepCompleted(false);
+            const savedCodeForStep = userCodeHistory[currentStep.stepNumber];
+            setUserCode(savedCodeForStep !== undefined ? savedCodeForStep : currentStep.codeTemplate);
             setShowHint(false);
         }
-
     }, [currentStepIndex, lessonData]);
 
 
-    // Función de validación simple en tiempo real
+    // 2. Guardar en historial y localStorage cada vez que el usuario escribe
+    const handleCodeChange = (value: string) => {
+        setUserCode(value);
+        const updatedHistory = { ...userCodeHistory, [currentStep.stepNumber]: value };
+        setUserCodeHistory(updatedHistory);
+        if (typeof window !== 'undefined') {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedHistory));
+        }
+    };
+
+    // 3. Validación de clases
     useEffect(() => {
         if (!currentStep) return;
-        // Comprobamos si todas las clases esperadas estan incluidas en el codigo del usuario
-        const allClassesMatches = currentStep.expectedClasses.every((className) => {
-            // Una validación simple busca que el string exacto de la clase exista en el código
+
+        const allClassMatches = currentStep.expectedClasses.every((className) => {
             return userCode.includes(className);
         });
 
-        setisStepCompleted(allClassesMatches);
+        setIsStepCompleted(allClassMatches);
     }, [userCode, currentStep]);
 
 
@@ -79,6 +105,8 @@ export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
             setCurrentStepIndex(prev => prev - 1)
         }
     }
+
+    const missingClasses = currentStep.expectedClasses.filter(c => !userCode.includes(c)) || [];
     return (
         <>
             <div className='flex w-full h-screen overflow-hidden bg-slate-900 text-slate-300'>
@@ -133,7 +161,7 @@ export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
                         </button>
                     </div>
                 </div>
-                {/* PANEL CENTRAL Y DERECHO: Editor y vista previa */}
+                {/* PANEL DERECHO: Editor de codigo y vista previa */}
                 <div className='w-[75%] h-full flex flex-col'>
                     {/* Seccion editor del codigo */}
                     <div className='h-[50%] border-b bg-slate-700 flex flex-col'>
@@ -142,26 +170,50 @@ export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
                                 Editor HTML / Tailwind
                             </span>
 
-                            {/* pequeño badge de validacion */}
+                            {/* pequeño badge de validacion y estado */}
                             <span className={`text-xs px-2 py-0.5 rounded-full font-medium 
                             ${isStepCompleted ? 'bg-emerald-500/10 text-emerald-400' : 'bg-rose-500/10 text-rose-400'}`}>
                                 {isStepCompleted ? '✓ Completado' : '⚡ En progreso'}
                             </span>
                         </div>
-                        <div className='flex-1 overflow-auto text-base'>
+                        {/* Banner con detalle de Clases Faltantes */}
+                        {!isStepCompleted && (
+                            <div className="bg-rose-950/40 border-b border-rose-900/50 px-4 py-2 text-xs text-rose-300 flex items-center gap-2">
+                                <span className="font-semibold text-rose-400">Faltan por agregar:</span>
+                                <div className="flex gap-1.5 flex-wrap">
+                                    {missingClasses.map((cls) => (
+                                        <code key={cls} className="bg-rose-900/60 text-rose-200 border border-rose-700/50 px-1.5 py-0.5 rounded font-mono">
+                                            {cls}
+                                        </code>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                        <div className="flex-1 overflow-auto text-base">
                             <CodeMirror
                                 value={userCode}
-                                height='100%'
-                                theme='dark'
+                                height="100%"
+                                theme="dark"
                                 extensions={[html()]}
-                                onChange={(value) => setUserCode(value)}
-                                className='h-full overflow-hidden'
+                                onChange={handleCodeChange}
+                                basicSetup={{
+                                    highlightActiveLineGutter: true, // Resalta el número de la línea activa
+                                    highlightActiveLine: true,       // Resalta la línea donde está el cursor
+                                    lineNumbers: true,
+                                    foldGutter: true,
+                                }}
+                                className="h-full overflow-hidden"
                             />
                         </div>
                     </div>
                     {/* Seccion vista previa */}
                     <div className='h-[50%] flex flex-col bg-slate-950'>
-                        <PreviewFrame code={userCode} />
+                        <div className="bg-slate-950 px-4 py-2 border-b border-slate-800">
+                            <span className="text-xs font-mono uppercase tracking-wider text-slate-400">Vista Previa en Vivo</span>
+                        </div>
+                        <div className="flex-1 p-4 bg-slate-900">
+                            <PreviewFrame code={userCode} />
+                        </div>
                     </div>
                 </div>
             </div>
