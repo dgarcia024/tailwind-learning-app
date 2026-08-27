@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useMemo } from 'react'
 import CodeMirror from '@uiw/react-codemirror';
 import { html } from '@codemirror/lang-html';
 import { EditorView, Decoration } from '@codemirror/view';
@@ -10,20 +10,31 @@ interface LessonContainerProps {
 }
 
 
-// Helper para crear la extensión de resaltado
-const highlightTargetLine = (targetLineNumber?: number) => {
-    if (!targetLineNumber || targetLineNumber < 1) return [];
+// Función que crea la decoración para CodeMirror
+const createLineHighlight = (lineNumber: number) => {
+  return EditorView.decorations.compute(['doc'], (state) => {
+    if (lineNumber > 0 && lineNumber <= state.doc.lines) {
+      const line = state.doc.line(lineNumber);
+      const lineDecoration = Decoration.line({
+        attributes: { class: 'cm-highlighted-step-line' }
+      });
+      return Decoration.set([lineDecoration.range(line.from)]);
+    }
+    return Decoration.none;
+  });
+};
 
-    return EditorView.decorations.compute(['doc'], (state) => {
-        if (targetLineNumber <= state.doc.lines) {
-            const line = state.doc.line(targetLineNumber);
-            const lineHighlightDecoration = Decoration.line({
-                attributes: { class: 'cm-highlighted-step-line' }
-            });
-            return Decoration.set([lineHighlightDecoration.range(line.from)]);
-        }
-        return Decoration.none;
-    });
+
+// Función que calcula qué línea contiene el atributo class donde debe editar el usuario
+const getTargetLineNumber = (step?: LessonStep): number => {
+    if (!step) return 1;
+    if (step.targetLine) return step.targetLine; // Si se especificó en el JSON, usa esa
+
+    // Si no está especificada, busca la línea que contiene 'class=' en el codeTemplate
+    const lines = step.codeTemplate.split('\n');
+    const lineIndex = lines.findIndex(line => line.includes('class='));
+
+    return lineIndex !== -1 ? lineIndex + 1 : 1;
 };
 
 export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
@@ -105,6 +116,16 @@ export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
             setCurrentStepIndex(prev => prev - 1)
         }
     }
+
+    // Dentro del componente LessonContainer:
+    const targetLine = useMemo(() => getTargetLineNumber(currentStep), [currentStep]);
+
+    const extensions = useMemo(() => {
+        return [
+            html(),
+            createLineHighlight(targetLine)
+        ];
+    }, [targetLine]);
 
     const missingClasses = currentStep.expectedClasses.filter(c => !userCode.includes(c)) || [];
     return (
@@ -194,7 +215,7 @@ export const LessonContainer = ({ lessonData }: LessonContainerProps) => {
                                 value={userCode}
                                 height="100%"
                                 theme="dark"
-                                extensions={[html()]}
+                                extensions={extensions}
                                 onChange={handleCodeChange}
                                 basicSetup={{
                                     highlightActiveLineGutter: true, // Resalta el número de la línea activa

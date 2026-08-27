@@ -5,6 +5,7 @@ export interface LessonStep {
     codeTemplate: string;
     expectedClasses: string[];
     hint: string;
+    targetLine?: number;
 }
 
 export interface Lesson {
